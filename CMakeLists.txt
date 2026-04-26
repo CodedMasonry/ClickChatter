@@ -8,8 +8,6 @@ add_executable(main main.cpp audio.cpp)
 
 target_include_directories(main PRIVATE ${MINIAUDIO_INCLUDE_DIRS})
 
-target_compile_definitions(main PRIVATE MINIAUDIO_IMPLEMENTATION)
-
 if(UNIX AND NOT APPLE)
     target_link_libraries(main PRIVATE pthread m dl)
 elseif(APPLE)
