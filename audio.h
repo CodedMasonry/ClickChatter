@@ -18,7 +18,7 @@ static std::vector<int> letter_to_morse(char letter);
 
 std::vector<Segment> encode_morse(const std::string &text);
 
-std::string morse_to_string(const std::vector<Segment> &segments);
+std::string morse_to_symbols(const std::vector<Segment> &segments);
 
 class MorseCodeProvider {
 public:

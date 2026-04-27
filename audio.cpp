@@ -100,7 +100,7 @@ std::vector<Segment> encode_morse(const std::string &text) {
   return result;
 }
 
-std::string morse_to_string(const std::vector<Segment> &segments) {
+std::string morse_to_symbols(const std::vector<Segment> &segments) {
   std::string result;
   for (size_t i = 0; i < segments.size(); ++i) {
     const auto &seg = segments[i];
@@ -116,12 +116,14 @@ std::string morse_to_string(const std::vector<Segment> &segments) {
   return result;
 }
 
+// --- Morse Code Provider --------------------------------------------------
+
 MorseCodeProvider::MorseCodeProvider(ma_device *device, ma_waveform *target)
     : waveform1(target) {
   wave_config = ma_waveform_config_init(
       device->playback.format, device->playback.channels, device->sampleRate,
       ma_waveform_type_sawtooth,
-      0.05, // amplitude
+      0.2, // amplitude
       300);
   ma_waveform_init(&wave_config, waveform1);
 }

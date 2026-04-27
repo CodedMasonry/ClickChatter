@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
       break;
     }
 
-    std::cout << "[O]: " << morse_to_string(encode_morse(str)) << "\n";
+    std::cout << "[O]: " << morse_to_symbols(encode_morse(str)) << "\n";
     provider.enqueue(str);
   }
 
