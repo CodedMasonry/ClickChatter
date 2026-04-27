@@ -6,15 +6,19 @@
 #include <vector>
 
 #define SAMPLE_RATE 48000
-#define UNIT_MS 50 // ms per dot
+#define UNIT_MS 75 // ms per dot
 #define UNIT_SAMPLES (SAMPLE_RATE * UNIT_MS / 1000)
-
-static std::vector<int> letter_to_morse(char letter);
 
 struct Segment {
   bool tone;
   ma_uint32 remaining; // in frames
 };
+
+static std::vector<int> letter_to_morse(char letter);
+
+std::vector<Segment> encode_morse(const std::string &text);
+
+std::string morse_to_string(const std::vector<Segment> &segments);
 
 class MorseCodeProvider {
 public:

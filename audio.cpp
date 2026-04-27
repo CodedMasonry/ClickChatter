@@ -67,13 +67,62 @@ static std::vector<int> letter_to_morse(char letter) {
   }
 }
 
+std::vector<Segment> encode_morse(const std::string &text) {
+  std::vector<Segment> result;
+  bool first_letter = true;
+
+  auto push = [&](bool tone, int units) {
+    result.push_back({tone, static_cast<ma_uint32>(units * UNIT_SAMPLES)});
+  };
+
+  for (size_t i = 0; i < text.size(); ++i) {
+    char c = text[i];
+    if (c == ' ') {
+      push(false, 4);
+      first_letter = true;
+      continue;
+    }
+    auto symbols = letter_to_morse(c);
+    if (symbols.empty())
+      continue;
+    if (!first_letter)
+      push(false, 3);
+    first_letter = false;
+    for (size_t j = 0; j < symbols.size(); ++j) {
+      if (j > 0)
+        push(false, 1);
+      if (symbols[j] == DOT)
+        push(true, 1);
+      else if (symbols[j] == DASH)
+        push(true, 3);
+    }
+  }
+  return result;
+}
+
+std::string morse_to_string(const std::vector<Segment> &segments) {
+  std::string result;
+  for (size_t i = 0; i < segments.size(); ++i) {
+    const auto &seg = segments[i];
+    if (seg.tone) {
+      result += (seg.remaining == UNIT_SAMPLES) ? '.' : '-';
+    } else {
+      ma_uint32 word_gap = static_cast<ma_uint32>(4 * UNIT_SAMPLES);
+      if (seg.remaining == word_gap)
+        result += ' ';
+      // inter-letter and inter-symbol gaps produce no visible character
+    }
+  }
+  return result;
+}
+
 MorseCodeProvider::MorseCodeProvider(ma_device *device, ma_waveform *target)
     : waveform1(target) {
   wave_config = ma_waveform_config_init(
       device->playback.format, device->playback.channels, device->sampleRate,
-      ma_waveform_type_square,
+      ma_waveform_type_sawtooth,
       0.05, // amplitude
-      600);
+      300);
   ma_waveform_init(&wave_config, waveform1);
 }
 
@@ -82,41 +131,10 @@ void MorseCodeProvider::push_symbol(bool tone, int units) {
 }
 
 void MorseCodeProvider::enqueue(const std::string &text) {
+  auto encoded = encode_morse(text);
   std::lock_guard<std::mutex> lock(mtx);
-
-  bool first_word = true;
-  bool first_letter = true;
-
-  for (size_t i = 0; i < text.size(); ++i) {
-    char c = text[i];
-
-    if (c == ' ') {
-      // Inter-word gap: 7 units total, but 3 were already added after
-      // the last letter, so add 4 more.
-      push_symbol(false, 4);
-      first_letter = true;
-      continue;
-    }
-
-    auto symbols = letter_to_morse(c);
-    if (symbols.empty())
-      continue;
-
-    // Inter-letter gap (3 units) — skip before the very first letter
-    if (!first_letter) {
-      push_symbol(false, 3);
-    }
-    first_letter = false;
-
-    for (size_t j = 0; j < symbols.size(); ++j) {
-      if (j > 0)
-        push_symbol(false, 1); // inter-symbol gap
-
-      if (symbols[j] == DOT)
-        push_symbol(true, 1);
-      else if (symbols[j] == DASH)
-        push_symbol(true, 3);
-    }
+  for (const auto &seg : encoded) {
+    queue.push_back(seg);
   }
 }
 

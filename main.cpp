@@ -1,3 +1,5 @@
+#include <iostream>
+#include <string>
 #define MINIAUDIO_IMPLEMENTATION
 #include "audio.h"
 #include <miniaudio.h>
@@ -6,6 +8,13 @@
 #define DEVICE_FORMAT ma_format_f32
 #define DEVICE_CHANNELS 2
 #define DEVICE_SAMPLE_RATE 48000
+
+std::string get_input() {
+  std::string str{};
+  std::cout << "[I]: ";
+  std::getline(std::cin, str);
+  return str;
+}
 
 void data_callback(ma_device *pDevice, void *pOutput, const void *pInput,
                    ma_uint32 frameCount) {
@@ -33,7 +42,7 @@ int main(int argc, char **argv) {
   MorseCodeProvider provider(&device, &targetData);
   device.pUserData = &provider;
 
-  provider.enqueue("Hello World");
+  provider.enqueue("SA");
 
   if (ma_device_start(&device) != MA_SUCCESS) {
     printf("Failed to start playback device.\n");
@@ -41,8 +50,16 @@ int main(int argc, char **argv) {
     return -5;
   }
 
-  printf("Press Enter to quit...\n");
-  getchar();
+  while (true) {
+    std::string str = get_input();
+
+    if (str == "exit") {
+      break;
+    }
+
+    std::cout << "[O]: " << morse_to_string(encode_morse(str)) << "\n";
+    provider.enqueue(str);
+  }
 
   ma_device_uninit(&device);
   ma_waveform_uninit(&targetData);
