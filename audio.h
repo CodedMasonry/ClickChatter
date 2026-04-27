@@ -25,14 +25,14 @@ public:
   MorseCodeProvider(ma_device *device, ma_waveform *target);
 
   // Call this to queue a string for playback
-  void enqueue(const std::string &text);
+  void enqueue(std::string_view text);
 
   // Called from data_callback — fills pOutput with tone or silence
   void fill(ma_device *device, void *pOutput, ma_uint32 frameCount);
 
 private:
   ma_waveform_config wave_config;
-  ma_waveform *waveform1;
+  ma_waveform *waveform;
 
   std::deque<Segment> queue;
   std::mutex mtx;
